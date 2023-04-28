@@ -51,6 +51,7 @@ libcockpit_bridge_a_CPPFLAGS = \
 
 libcockpit_bridge_a_LIBS = \
 	libcockpit-bridge.a \
+	librust.a \
 	$(libcockpit_metrics_a_LIBS) \
 	$(libsystemd_LIBS) \
 	$(NULL)
@@ -105,6 +106,8 @@ libcockpit_bridge_a_SOURCES = \
 	src/bridge/cockpitstream.h \
 	src/bridge/cockpitwebsocketstream.c \
 	src/bridge/cockpitwebsocketstream.h \
+	src/bridge/cockpitquackchannel.c \
+	src/bridge/cockpitquackchannel.h \
 	$(NULL)
 
 if WITH_POLKIT
