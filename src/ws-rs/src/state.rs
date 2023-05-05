@@ -16,17 +16,17 @@ fn gen_os_release() -> HashMap<String, String> {
 
     let content = fs::read_to_string(path).expect("Unexpected error reading os_release");
     for line in content.lines() {
-        if line.starts_with("#") {
+        if line.starts_with('#') {
             continue;
         }
 
-        let mut key_val = line.split("=");
+        let mut key_val = line.split('=');
         let key = key_val.next().unwrap();
         let value = key_val.next().unwrap().replace('"', "");
         map.insert(key.into(), value);
     }
 
-    return map;
+    map
 }
 
 fn calculate_branding_roots(os_release: &HashMap<String, String>) -> Vec<String> {
@@ -63,14 +63,14 @@ fn calculate_branding_roots(os_release: &HashMap<String, String>) -> Vec<String>
     }
 
     if let Some(os_id_like) = os_release.get("ID_LIKE") {
-        for word in os_id_like.split(" ") {
+        for word in os_id_like.split(' ') {
             roots.push(format!("{STATIC_BASE_PATH}branding/{word}"));
         }
     }
 
     roots.push(format!("{STATIC_BASE_PATH}branding/default"));
-    roots.push(format!("{STATIC_BASE_PATH}"));
-    return roots;
+    roots.push("{STATIC_BASE_PATH}".to_string());
+    roots
 }
 
 // CockpitHandlerData from src/ws/cockpithandlers.h
