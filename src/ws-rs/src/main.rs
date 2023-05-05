@@ -2,7 +2,9 @@ use std::fs;
 
 use actix_web::{get, middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
+use clap::Parser;
 
+mod cli;
 mod cockpit_branding;
 use self::cockpit_branding::cockpit_static;
 mod server;
@@ -15,7 +17,7 @@ use self::constants::STATIC_BASE_PATH;
 
 #[get("/")]
 async fn index(data: WebCockpitState) -> Result<HttpResponse, Error> {
-    let html_base = fs::read_to_string(&format!("{STATIC_BASE_PATH}login.html"))?;
+    let html_base = fs::read_to_string(format!("{STATIC_BASE_PATH}login.html"))?;
     let enviroment = data.build_js_environment();
     Ok(HttpResponse::Ok()
         .body(html_base.replace("<meta insert_dynamic_content_here>", &enviroment)))
@@ -36,7 +38,11 @@ async fn echo_ws(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse,
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    log::info!("starting HTTP server at http://localhost:8080");
+    let args = cli::Args::parse();
+    let port = &args.get_port();
+    let address = &args.get_address();
+
+    log::info!("starting HTTP server at http://{address}:{port}",);
 
     HttpServer::new(|| {
         App::new()
@@ -51,7 +57,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
     })
     .workers(2)
-    .bind(("127.0.0.1", 8080))?
+    .bind((address.to_owned(), port.to_owned()))?
     .run()
     .await
 }
