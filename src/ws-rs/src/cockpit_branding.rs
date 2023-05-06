@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use actix_files::NamedFile;
 use actix_web::{get, Error, HttpRequest, HttpResponse};
@@ -6,10 +6,10 @@ use std::{fs, io};
 
 use crate::state::WebCockpitState;
 
-fn find_file_from_roots(path: &str, roots: &Vec<String>) -> Result<NamedFile, Error> {
+fn find_file_from_roots(path: &str, roots: &Vec<PathBuf>) -> Result<NamedFile, Error> {
     // TODO: Handle root espace like (src/common/cockpitwebresponse.c:web_response_file)
     for root in roots {
-        let combined = format!("{root}/{path}");
+        let combined = root.join(path);
         let full_path = Path::new(&combined);
         if full_path.exists() {
             return NamedFile::open(full_path).map_err(|e| e.into());

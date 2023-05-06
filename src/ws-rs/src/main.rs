@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::PathBuf;
 
 use actix_web::{get, middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
@@ -17,7 +18,7 @@ use self::constants::STATIC_BASE_PATH;
 
 #[get("/")]
 async fn index(data: WebCockpitState) -> Result<HttpResponse, Error> {
-    let html_base = fs::read_to_string(format!("{STATIC_BASE_PATH}login.html"))?;
+    let html_base = fs::read_to_string(PathBuf::from(STATIC_BASE_PATH).join("login.html"))?;
     let enviroment = data.build_js_environment();
     Ok(HttpResponse::Ok()
         .body(html_base.replace("<meta insert_dynamic_content_here>", &enviroment)))

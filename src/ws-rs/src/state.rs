@@ -1,5 +1,9 @@
 use actix_web::web;
-use std::{collections::HashMap, fs, path::Path};
+use std::{
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use crate::constants::STATIC_BASE_PATH;
 
@@ -29,8 +33,9 @@ fn gen_os_release() -> HashMap<String, String> {
     map
 }
 
-fn calculate_branding_roots(os_release: &HashMap<String, String>) -> Vec<String> {
-    let mut roots: Vec<String> = Vec::new();
+fn calculate_branding_roots(os_release: &HashMap<String, String>) -> Vec<PathBuf> {
+    let mut roots: Vec<PathBuf> = Vec::new();
+    let base = PathBuf::from(STATIC_BASE_PATH);
 
     // TODO: add_system_dirs from src/ws/cockpitbranding.c
 
@@ -55,21 +60,19 @@ fn calculate_branding_roots(os_release: &HashMap<String, String>) -> Vec<String>
     // This is for local testing
     if let Some(os_id) = os_release.get("ID") {
         if let Some(os_variant_id) = os_release.get("VARIANT_ID") {
-            roots.push(format!(
-                "{STATIC_BASE_PATH}branding/{os_id}-{os_variant_id}"
-            ));
+            roots.push(base.join(format!("branding/{os_id}-{os_variant_id}")));
         }
-        roots.push(format!("{STATIC_BASE_PATH}branding/{os_id}"));
+        roots.push(base.join(format!("branding/{os_id}")));
     }
 
     if let Some(os_id_like) = os_release.get("ID_LIKE") {
         for word in os_id_like.split(' ') {
-            roots.push(format!("{STATIC_BASE_PATH}branding/{word}"));
+            roots.push(base.join(format!("branding/{word}")));
         }
     }
 
-    roots.push(format!("{STATIC_BASE_PATH}branding/default"));
-    roots.push("{STATIC_BASE_PATH}".to_string());
+    roots.push(base.join("branding/default"));
+    roots.push(base);
     roots
 }
 
@@ -78,7 +81,7 @@ fn calculate_branding_roots(os_release: &HashMap<String, String>) -> Vec<String>
 pub struct CockpitState {
     // TODO: Auth
     os_release: HashMap<String, String>,
-    branding: Vec<String>,
+    branding: Vec<PathBuf>,
 }
 
 impl CockpitState {
@@ -91,7 +94,7 @@ impl CockpitState {
         }
     }
 
-    pub fn branding(&self) -> &Vec<String> {
+    pub fn branding(&self) -> &Vec<PathBuf> {
         &self.branding
     }
 
