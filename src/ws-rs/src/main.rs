@@ -50,8 +50,8 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     let args = cli::Args::parse();
-    let port = &args.get_port();
-    let address = &args.get_address();
+    let port = &args.port();
+    let address = &args.address();
 
     log::info!("starting HTTP server at http://{address}:{port}",);
 

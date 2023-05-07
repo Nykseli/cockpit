@@ -32,11 +32,11 @@ pub struct Args {
 }
 
 impl Args {
-    pub fn get_port(&self) -> u16 {
+    pub fn port(&self) -> u16 {
         self.port.unwrap_or(9090)
     }
 
-    pub fn get_address(&self) -> String {
+    pub fn address(&self) -> String {
         match self.address.clone() {
             Some(address) => address,
             None => String::from("0.0.0.0"),

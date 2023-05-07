@@ -9,6 +9,7 @@ use crate::message::BridgeMessage;
 
 const BPATH: &str = "/home/duck/Documents/cockpit/cockpit-tree/rust-rewrite/cockpit-bridge";
 
+#[derive(Debug)]
 pub struct CockpitBridge {
     #[allow(dead_code)]
     thread_handle: JoinHandle<()>,
