@@ -1,11 +1,16 @@
 use std::fs;
 use std::path::PathBuf;
+use std::sync::mpsc;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 use actix_web::{get, middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use clap::Parser;
 
 mod cli;
+mod cockpit_bridge;
+use self::cockpit_bridge::CockpitBridge;
 mod cockpit_branding;
 use self::cockpit_branding::cockpit_static;
 mod server;
@@ -14,6 +19,7 @@ mod state;
 use self::state::CockpitState;
 use self::state::WebCockpitState;
 mod constants;
+mod message;
 use self::constants::STATIC_BASE_PATH;
 
 #[get("/")]
@@ -31,8 +37,12 @@ async fn login() -> HttpResponse {
 }
 
 /// WebSocket handshake and start `MyWebSocket` actor.
-async fn echo_ws(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    ws::start(MyWebSocket::new(), &req, stream)
+async fn echo_ws(
+    data: WebCockpitState,
+    req: HttpRequest,
+    stream: web::Payload,
+) -> Result<HttpResponse, Error> {
+    ws::start(MyWebSocket::new(data.bridge().clone()), &req, stream)
 }
 
 #[actix_web::main]
@@ -45,9 +55,23 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("starting HTTP server at http://{address}:{port}",);
 
-    HttpServer::new(|| {
+    let (tx, rx) = mpsc::channel();
+
+    let mut bridge = CockpitBridge::create(tx);
+    let bridge_msg = rx.recv().expect("Error getting a message from bridge");
+    let bridge_msg = bridge_msg.lines().last().unwrap().to_string();
+    // TODO: create a logic for creating the json object
+    bridge.send_json(
+        "{ \"command\": \"init\", \"version\": 1, \"host\": \"localhost\", \"superuser\": false }",
+    );
+    let bridge_arc = Arc::new(Mutex::new(bridge));
+
+    HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(CockpitState::new()))
+            .app_data(web::Data::new(CockpitState::new(
+                bridge_arc.clone(),
+                &bridge_msg,
+            )))
             // .service(web::resource("/").to(index))
             .service(index)
             // websocket route

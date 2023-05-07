@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 use actix_files::NamedFile;
 use actix_web::{get, Error, HttpRequest, HttpResponse};
@@ -6,9 +9,13 @@ use std::{fs, io};
 
 use crate::state::WebCockpitState;
 
-fn find_file_from_roots(path: &str, roots: &Vec<PathBuf>) -> Result<NamedFile, Error> {
+fn find_file_from_roots<P: Into<PathBuf> + AsRef<OsStr>>(
+    path: &str,
+    roots: &Vec<P>,
+) -> Result<NamedFile, Error> {
     // TODO: Handle root espace like (src/common/cockpitwebresponse.c:web_response_file)
     for root in roots {
+        let root: PathBuf = root.into();
         let combined = root.join(path);
         let full_path = Path::new(&combined);
         if full_path.exists() {

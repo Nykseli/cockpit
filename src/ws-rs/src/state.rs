@@ -1,11 +1,46 @@
 use actix_web::web;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs,
     path::{Path, PathBuf},
+    sync::{Arc, Mutex},
 };
 
-use crate::constants::STATIC_BASE_PATH;
+// TODO: proper package types
+#[derive(Debug, Deserialize, Serialize)]
+struct BridgeInitStatePackages {
+    playground: Option<String>,
+    ssh: Option<String>,
+    performance: Option<String>,
+    selinux: Option<String>,
+    shell: Option<String>,
+    kdump: Option<String>,
+    network: Option<String>,
+    users: Option<String>,
+    metrics: Option<String>,
+    apps: Option<String>,
+    updates: Option<String>,
+    storage: Option<String>,
+    // TODO: serde key static
+    #[serde(rename = "static")]
+    static_: Option<String>,
+    base1: Option<String>,
+    sosreport: Option<String>,
+    system: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct BridgeInitState {
+    command: String,
+    version: i32,
+    packages: BridgeInitStatePackages,
+    #[serde(rename = "os-release")]
+    os_release: HashMap<String, Option<String>>,
+    capabilities: HashMap<String, bool>,
+}
+
+use crate::{cockpit_bridge::CockpitBridge, constants::STATIC_BASE_PATH};
 
 fn gen_os_release() -> HashMap<String, String> {
     let mut map = HashMap::new();
@@ -82,15 +117,22 @@ pub struct CockpitState {
     // TODO: Auth
     os_release: HashMap<String, String>,
     branding: Vec<PathBuf>,
+    #[allow(dead_code)]
+    bridge_state: BridgeInitState,
+    bridge: Arc<Mutex<CockpitBridge>>,
 }
 
 impl CockpitState {
-    pub fn new() -> Self {
+    pub fn new(bridge: Arc<Mutex<CockpitBridge>>, bridge_msg: &str) -> Self {
+        let bridge_state: BridgeInitState =
+            serde_json::from_str(bridge_msg).expect("First message from bridge is not valid");
         let os_release = gen_os_release();
         let branding = calculate_branding_roots(&os_release);
         Self {
             os_release,
             branding,
+            bridge_state,
+            bridge,
         }
     }
 
@@ -100,6 +142,10 @@ impl CockpitState {
 
     pub fn os_release(&self) -> &HashMap<String, String> {
         &self.os_release
+    }
+
+    pub fn bridge(&self) -> &Arc<Mutex<CockpitBridge>> {
+        &self.bridge
     }
 
     pub fn build_js_environment(&self) -> String {
