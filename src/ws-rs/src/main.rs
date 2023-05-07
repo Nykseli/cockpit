@@ -20,6 +20,7 @@ use self::state::CockpitState;
 use self::state::WebCockpitState;
 mod constants;
 mod message;
+mod os_release;
 use self::constants::STATIC_BASE_PATH;
 
 #[get("/")]

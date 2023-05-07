@@ -1,7 +1,10 @@
 use actix_web::web;
 use serde::{Deserialize, Serialize};
+use serde_json::to_string;
 use std::{
     collections::HashMap,
+    convert::From,
+    env::var,
     fs,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
@@ -122,6 +125,36 @@ pub struct CockpitState {
     bridge: Arc<Mutex<CockpitBridge>>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct Page {
+    connect: bool,
+    require_host: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Enviroment {
+    is_cockpit_client: bool,
+    page: Page,
+    hostname: String,
+    os_release: HashMap<String, String>,
+}
+
+impl From<&CockpitState> for Enviroment {
+    fn from(state: &CockpitState) -> Enviroment {
+        Enviroment {
+            //FIXME don't use constants find out how its detected upstream
+            is_cockpit_client: false,
+            page: Page {
+                connect: true,
+                require_host: false,
+            },
+            //FIXME
+            hostname: var("HOST").unwrap(),
+            os_release: state.os_release().to_owned(),
+        }
+    }
+}
+
 impl CockpitState {
     pub fn new(bridge: Arc<Mutex<CockpitBridge>>, bridge_msg: &str) -> Self {
         let bridge_state: BridgeInitState =
@@ -164,8 +197,10 @@ impl CockpitState {
         let suffix = ";\n    </script>";
 
         // TODO: actually build the environment src/ws/cockpithandlers.c:build_environment
-        let environment = "{\"is_cockpit_client\":false,\"page\":{\"connect\":true,\"require_host\":false},\"hostname\":\"pond\",\"os-release\":{\"NAME\":\"openSUSE Tumbleweed\",\"ID\":\"opensuse-tumbleweed\",\"PRETTY_NAME\":\"openSUSE Tumbleweed\",\"CPE_NAME\":\"cpe:/o:opensuse:tumbleweed:20230426\",\"ID_LIKE\":\"opensuse suse\",\"DOCUMENTATION_URL\":\"https://en.opensuse.org/Portal:Tumbleweed\"}}";
-        format!("{prefix}{environment}{suffix}")
+        let environment = Enviroment::from(self);
+        //TODO: drop unwrap
+        let envstring = to_string(&environment).unwrap();
+        format!("{prefix}{envstring}{suffix}")
     }
 }
 
