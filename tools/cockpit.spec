@@ -82,6 +82,10 @@ Source0:        https://github.com/cockpit-project/cockpit/releases/download/%{v
 %define build_optional 1
 %endif
 
+%if 0%{?build_optional} && 0%{?suse_version} == 0
+%define build_tests 1
+%endif
+
 # Allow root login in Cockpit on RHEL 8 and lower as it also allows password login over SSH.
 %if 0%{?rhel} && 0%{?rhel} <= 8
 %define disallow_root 0
@@ -301,14 +305,17 @@ rm -rf %{buildroot}%{python3_sitelib}/cockpit*
 for pkg in apps packagekit pcp playground storaged; do
     rm -rf %{buildroot}/%{_datadir}/cockpit/$pkg
 done
-# files from -tests
-rm -f %{buildroot}/%{pamdir}/mock-pam-conv-mod.so
-rm -f %{buildroot}/%{_unitdir}/cockpit-session.socket
-rm -f %{buildroot}/%{_unitdir}/cockpit-session@.service
 # files from -pcp
 rm -r %{buildroot}/%{_libexecdir}/cockpit-pcp %{buildroot}/%{_localstatedir}/lib/pcp/
 # files from -storaged
 rm -f %{buildroot}/%{_prefix}/share/metainfo/org.cockpit-project.cockpit-storaged.metainfo.xml
+%endif
+
+%if 0%{?build_tests} == 0
+rm -rf %{buildroot}%{_datadir}/cockpit/playground
+rm -f %{buildroot}/%{pamdir}/mock-pam-conv-mod.so
+rm -f %{buildroot}/%{_unitdir}/cockpit-session.socket
+rm -f %{buildroot}/%{_unitdir}/cockpit-session@.service
 %endif
 
 sed -i "s|%{buildroot}||" *.list
@@ -659,6 +666,7 @@ The Cockpit component for managing storage.  This package uses udisks.
 %dir %{_datadir}/cockpit/storaged/images
 %{_datadir}/metainfo/org.cockpit-project.cockpit-storaged.metainfo.xml
 
+%if 0%{?build_tests}
 %package -n cockpit-tests
 Summary: Tests for Cockpit
 Requires: cockpit-bridge >= %{required_base}
@@ -674,6 +682,9 @@ These files are not required for running Cockpit.
 %{pamdir}/mock-pam-conv-mod.so
 %{_unitdir}/cockpit-session.socket
 %{_unitdir}/cockpit-session@.service
+
+# /build_tests
+%endif
 
 %package -n cockpit-pcp
 Summary: Cockpit PCP integration
