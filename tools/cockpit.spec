@@ -224,8 +224,13 @@ make -j$(nproc) check
 %install
 %make_install
 make install-tests DESTDIR=%{buildroot}
+%if 0%{?suse_version} > 1500
+mkdir -p $RPM_BUILD_ROOT%{_pam_vendordir}
+install -p -m 644 tools/cockpit.pam $RPM_BUILD_ROOT%{_pam_vendordir}/cockpit
+%else
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/pam.d
 install -p -m 644 tools/cockpit.pam $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/cockpit
+%endif
 rm -f %{buildroot}/%{_libdir}/cockpit/*.so
 install -D -p -m 644 AUTHORS COPYING README.md %{buildroot}%{_docdir}/cockpit/
 
@@ -325,7 +330,20 @@ rm -f %{buildroot}/%{_unitdir}/cockpit-session@.service
 
 sed -i "s|%{buildroot}||" *.list
 
-%if ! 0%{?suse_version}
+%if 0%{?suse_version}
+# remove brandings with stale symlinks. Means they don't match
+# the distro.
+pushd %{buildroot}/%{_datadir}/cockpit/branding
+ls --hide={default,kubernetes,opensuse,registry,sle-micro,suse} | xargs rm -rv
+popd
+# need this in SUSE as post build checks dislike stale symlinks
+install -m 644 -D /dev/null %{buildroot}/run/cockpit/motd
+install -m 644 -D /dev/null %{buildroot}/usr/share/cockpit/branding/opensuse/default-1920x1200.jpg ||:
+# remove files of not installable packages
+rm -r %{buildroot}%{_datadir}/cockpit/sosreport
+rm -f %{buildroot}/%{_prefix}/share/metainfo/org.cockpit-project.cockpit-sosreport.metainfo.xml
+rm -f %{buildroot}%{_datadir}/pixmaps/cockpit-sosreport.png
+%else
 %global _debugsource_packages 1
 %global _debuginfo_subpackages 0
 
@@ -461,6 +479,11 @@ Conflicts: firewalld < 0.6.0-1
 Recommends: sscg >= 2.3
 Recommends: system-logos
 Suggests: sssd-dbus
+%if 0%{?suse_version}
+Requires(pre): permissions
+Requires: distribution-logos
+Requires: wallpaper-branding
+%endif
 # for cockpit-desktop
 Suggests: python3
 
@@ -481,7 +504,11 @@ authentication via sssd/FreeIPA.
 %doc %{_mandir}/man8/pam_ssh_add.8.gz
 %dir %{_sysconfdir}/cockpit
 %config(noreplace) %{_sysconfdir}/cockpit/ws-certs.d
+%if 0%{?suse_version} > 1500
+%{_pam_vendordir}/cockpit
+%else
 %config(noreplace) %{_sysconfdir}/pam.d/cockpit
+%endif
 # created in %post, so that users can rm the files
 %ghost %{_sysconfdir}/issue.d/cockpit.issue
 %ghost %{_sysconfdir}/motd.d/cockpit
@@ -528,6 +555,12 @@ getent passwd cockpit-wsinstance >/dev/null || useradd -r -g cockpit-wsinstance 
 if %{_sbindir}/selinuxenabled 2>/dev/null; then
     %selinux_relabel_pre -s %{selinuxtype}
 fi
+%if 0%{?suse_version} > 1500
+# Prepare for migration to /usr/lib; save any old .rpmsave
+for i in pam.d/cockpit ; do
+     test -f %{_sysconfdir}/${i}.rpmsave && mv -v %{_sysconfdir}/${i}.rpmsave %{_sysconfdir}/${i}.rpmsave.old ||:
+done
+%endif
 
 %post ws
 if [ -x %{_sbindir}/selinuxenabled ]; then
@@ -548,6 +581,9 @@ if [ "$1" = 1 ]; then
     chmod 644 /etc/cockpit/disallowed-users
 fi
 
+%if 0%{?suse_version}
+%set_permissions %{_libexecdir}/cockpit-session
+%endif
 %tmpfiles_create cockpit-tempfiles.conf
 %systemd_post cockpit.socket cockpit.service
 # firewalld only partially picks up changes to its services files without this
@@ -571,6 +607,19 @@ if [ -x %{_sbindir}/selinuxenabled ]; then
 fi
 %systemd_postun_with_restart cockpit.socket cockpit.service
 
+%if 0%{?suse_version}
+%verifyscript ws
+%verify_permissions -e %{_libexecdir}/cockpit-session
+%endif
+
+%if 0%{?suse_version} > 1500
+%posttrans ws
+# Migration to /usr/lib, restore just created .rpmsave
+for i in pam.d/cockpit ; do
+     test -f %{_sysconfdir}/${i}.rpmsave && mv -v %{_sysconfdir}/${i}.rpmsave %{_sysconfdir}/${i} ||:
+done
+%endif
+
 # -------------------------------------------------------------------------------
 # Sub-packages that are part of cockpit-system in RHEL/CentOS, but separate in Fedora
 
@@ -589,6 +638,7 @@ The Cockpit component for configuring kernel crash dumping.
 %files kdump -f kdump.list
 %{_datadir}/metainfo/org.cockpit-project.cockpit-kdump.metainfo.xml
 
+%if !0%{?suse_version}
 %package sosreport
 Summary: Cockpit user interface for diagnostic reports
 Requires: cockpit-bridge >= %{required_base}
@@ -603,6 +653,7 @@ sosreport tool.
 %files sosreport -f sosreport.list
 %{_datadir}/metainfo/org.cockpit-project.cockpit-sosreport.metainfo.xml
 %{_datadir}/pixmaps/cockpit-sosreport.png
+%endif
 
 %package networkmanager
 Summary: Cockpit user interface for networking, using NetworkManager
@@ -658,14 +709,16 @@ Dummy package from building optional packages only; never install or publish me.
 Summary: Cockpit user interface for storage, using udisks
 Requires: cockpit-shell >= %{required_base}
 Requires: udisks2 >= 2.9
+Requires: %{__python3}
+%if 0%{?suse_version}
+Requires: libudisks2-0_lvm2 >= 2.9
+Recommends: multipath-tools
+Requires: python3-dbus-python
+%else
 Recommends: udisks2-lvm2 >= 2.9
 Recommends: udisks2-iscsi >= 2.9
 Recommends: device-mapper-multipath
 Recommends: clevis-luks
-Requires: %{__python3}
-%if 0%{?suse_version}
-Requires: python3-dbus-python
-%else
 Requires: python3-dbus
 %endif
 BuildArch: noarch
