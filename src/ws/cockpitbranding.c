@@ -51,6 +51,31 @@ add_system_dirs (GPtrArray *dirs)
     }
 }
 
+/**
+ * Add paths for custom theme roots.
+ * Custom themes can be used to override the OS specific theme.
+ * Custom themes can also accidentally override other custom themes so it's
+ * recommended to only have one custom theme installed at a time.
+ */
+static void
+add_custom_theme_roots (GPtrArray *dirs)
+{
+  GDir *dir;
+  const gchar *filename;
+
+  dir = g_dir_open (DATADIR "/cockpit/branding", 0, NULL);
+  // If branding doesn't exsist at all on the system, there won't be anything
+  // custom either so we can ignore this and return early
+  if (dir == NULL)
+    return;
+
+  while ((filename = g_dir_read_name(dir)))
+    {
+      if (g_str_has_prefix (filename, "custom-"))
+        g_ptr_array_add (dirs, g_strdup_printf (DATADIR "/cockpit/branding/%s", filename));
+    }
+}
+
 gchar **
 cockpit_branding_calculate_static_roots (const gchar *os_id,
                                          const gchar *os_variant_id,
@@ -61,6 +86,8 @@ cockpit_branding_calculate_static_roots (const gchar *os_id,
   gchar **roots;
 
   dirs = g_ptr_array_new_with_free_func (g_free);
+
+  add_custom_theme_roots (dirs);
 
   if (is_local)
     add_system_dirs (dirs);
