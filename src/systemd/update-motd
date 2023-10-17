@@ -12,8 +12,13 @@ port=${port:-9090}
 # hostname from cmdline, then `hostname -f`
 hostname=${2:-$(hostname -f || hostname)}
 
-# ip addr from cmdline, then default route source addr
-ip=${3:-$(ip -o route get 255.0 2>/dev/null | sed -e 's/.*src \([^ ]*\) .*/\1/')}
+# ip addr from cmdline, then ip from default interface using issue file syntax
+# see `man 8 agetty`
+ip="$3"
+if [ -z "$ip" ]; then
+    ip=$(ip -o route get 255.0 2>/dev/null | awk '{print $5}')
+    ip="\4{$ip}"
+fi
 
 # protocol from cmdline, then https
 protocol=${4:-https}
