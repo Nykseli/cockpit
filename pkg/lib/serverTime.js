@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
+
+// @ts-check
+
 import cockpit from "cockpit";
 import React, { useState } from "react";
 import { Button } from "@patternfly/react-core/dist/esm/components/Button/index.js";
@@ -31,20 +34,20 @@ import { CloseIcon, ExclamationCircleIcon, InfoCircleIcon, PlusIcon } from "@pat
 import { show_modal_dialog } from "cockpit-components-dialog.jsx";
 import { useObject, useEvent } from "hooks.js";
 
-import * as service from "service.js";
-import * as timeformat from "timeformat.js";
-import * as python from "python.js";
+import * as service from "service";
+import * as timeformat from "timeformat";
+import * as python from "python";
 import get_timesync_backend_py from "./get-timesync-backend.py";
 
-import { superuser } from "superuser.js";
+import { superuser } from "superuser";
 
 import "serverTime.scss";
 
 const _ = cockpit.gettext;
 
 export function ServerTime() {
-    const self = this;
-    cockpit.event_target(self);
+    const _self = this;
+    const self = cockpit.event_target(_self);
 
     function emit_changed() {
         self.dispatchEvent("changed");
@@ -98,6 +101,7 @@ export function ServerTime() {
     });
 
     self.format = function format(and_time) {
+        /** @type {Intl.DateTimeFormatOptions}  */
         const options = { dateStyle: "medium", timeStyle: and_time ? "short" : undefined, timeZone: "UTC" };
         return timeformat.formatter(options).format(self.utc_fake_now);
     };
@@ -111,6 +115,7 @@ export function ServerTime() {
     };
 
     self.update = function update() {
+        // fail and done comes from the cockpit factory create_promise function
         return cockpit.spawn(["date", "+%s:%z"], { err: "message" })
                 .done(function(data) {
                     const parts = data.trim().split(":");
@@ -148,7 +153,7 @@ export function ServerTime() {
                                 })
                                 .done(function() {
                                     self.update();
-                                    resolve();
+                                    resolve(undefined);
                                 });
                     });
         });
@@ -227,6 +232,7 @@ export function ServerTime() {
     };
 
     self.get_ntp_status = function () {
+        /** @type {import("serverTime").NtpStatus} */
         const status = {
             initialized: false,
             active: false,

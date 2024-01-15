@@ -19,8 +19,11 @@
 
 /* eslint-disable indent,no-empty */
 
+// @ts-check
+
 let url_root;
 
+/** @type {HTMLMetaElement | null} */
 const meta_url_root = document.head.querySelector("meta[name='url-root']");
 if (meta_url_root) {
     url_root = meta_url_root.content.replace(/^\/+|\/+$/g, '');
@@ -35,7 +38,22 @@ if (meta_url_root) {
 /* injected by tests */
 var mock = mock || { }; // eslint-disable-line no-use-before-define, no-var
 
-const cockpit = { };
+
+/** @type {import("cockpit").Cockpit} */
+const cockpit = {
+    gettext: () => { throw new Error("Function 'gettext' not implemented."); },
+    format: () => { throw new Error("Function 'format' not implemented."); },
+    dbus: () => { throw new Error("Function 'dbus' not implemented."); },
+    jump: () => { throw new Error("Function 'jump' not implemented."); },
+    script: () => { throw new Error("Function 'script' not implemented."); },
+    spawn: () => { throw new Error("Function 'spawn' not implemented."); },
+    event_target: () => { throw new Error("Function 'event_target' not implemented."); },
+    permission: () => { throw new Error("Function 'permission' not implemented."); },
+    empty_event_mixin: () => { throw new Error("Function 'empty_event_mixin' not implemented."); },
+    message: () => { throw new Error("Function 'message' not implemented."); },
+    transport: {},
+    language: ""
+};
 event_mixin(cockpit, { });
 
 /*
@@ -318,6 +336,7 @@ function calculate_url(suffix) {
     const window_loc = window.location.toString();
     /* this is not set by anything right now, just a client-side stub; see
      * https://github.com/cockpit-project/cockpit/pull/17473 for the server-side and complete solution */
+    /** @type {HTMLMetaElement | null} */
     const meta_websocket_root = document.head.querySelector("meta[name='websocket-root']");
     let _url_root = meta_websocket_root ? meta_websocket_root.content.replace(/^\/+|\/+$/g, '') : url_root;
 
@@ -351,7 +370,7 @@ function join_data(buffers, binary) {
 
     const data = window.Uint8Array ? new window.Uint8Array(total) : new Array(total);
 
-    if (data.set) {
+    if (data instanceof window.Uint8Array/*  && data.set */) {
         for (let j = 0, i = 0; i < length; i++) {
             data.set(buffers[i], j);
             j += buffers[i].length;
@@ -448,6 +467,7 @@ function parse_channel(data) {
 
 /* Private Transport class */
 function Transport() {
+    /** @type {import("cockpit").Transport} */
     const self = this;
     self.application = calculate_application();
 
@@ -4440,6 +4460,15 @@ function factory() {
             return old_onerror(msg, url, line);
         return false;
     };
+
+    // Helper function for empty even_mixins for initialising objects
+    cockpit.empty_event_mixin = function empty_event_mixin() {
+        return {
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            dispatchEvent: () => {},
+        }
+    }
 
     return cockpit;
 }

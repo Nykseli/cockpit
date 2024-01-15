@@ -3,6 +3,9 @@
  *
  * Time stamps are given in milliseconds since the epoch.
  */
+
+// @ts-check
+
 import cockpit from "cockpit";
 import { parse, formatDistanceToNow } from 'date-fns';
 import * as locales from 'date-fns/locale/index.js';
@@ -48,7 +51,7 @@ export function parseShortDate(dateStr) {
 
     // Strip time which may cause bugs in calendar
     const timePortion = parsed.getTime() % (3600 * 1000 * 24);
-    return new Date(parsed - timePortion);
+    return new Date(Number(parsed) - timePortion);
 }
 
 /***

@@ -17,6 +17,8 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
+// @ts-check
+
 import cockpit from "cockpit";
 
 /* import { superuser } from "superuser";
@@ -79,9 +81,11 @@ function Superuser() {
         return proxy.Current != "none";
     };
 
+    /** @type {import("superuser").SuperUser} */
     const self = {
         allowed: compute_allowed(),
-        reload_page_on_change
+        reload_page_on_change,
+        ...cockpit.empty_event_mixin()
     };
 
     cockpit.event_target(self);
@@ -89,7 +93,7 @@ function Superuser() {
     function changed(allowed) {
         if (self.allowed != allowed) {
             if (self.allowed != null && reload_on_change) {
-                window.location.reload(true);
+                window.location.reload();
             } else {
                 const prev = self.allowed;
                 self.allowed = allowed;

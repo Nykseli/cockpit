@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "es6",
+    "strict": true,
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "jsx": "react",
+    "allowJs": true,
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "*": ["types/*"]
+    },
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2021.String",
+      "ES2021"
+    ]
+  },
+  "include": [
+    "src/*.ts",
+    "src/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/*.js",
+    "src/*.jsx",
+    "src/**/*.js",
+    "src/**/*.jsx"
+  ],
+  "exclude": [
+    "node_modules",
+  ]
+}

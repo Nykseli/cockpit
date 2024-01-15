@@ -1,3 +1,4 @@
+// @ts-check
 import cockpit from "cockpit";
 
 /* SERVICE MANAGEMENT API
@@ -116,6 +117,7 @@ function with_systemd_manager(done) {
 }
 
 export function proxy(name, kind) {
+    /** @type {import("service").ServiceProxy} */
     const self = {
         exists: null,
         state: null,
@@ -132,11 +134,14 @@ export function proxy(name, kind) {
         disable,
 
         getRunJournal,
+        ...cockpit.empty_event_mixin()
     };
 
     cockpit.event_target(self);
 
-    let unit, details;
+    /** @type {import("service").ServiceProxy['unit']} */
+    let unit;
+    let details;
     let wait_promise_resolve;
     const wait_promise = new Promise(resolve => { wait_promise_resolve = resolve });
 
@@ -281,7 +286,7 @@ export function proxy(name, kind) {
                         dbus.close();
                         refresh().then(() => {
                             if (result === "done")
-                                resolve();
+                                resolve(undefined);
                             else
                                 reject(new Error(`systemd job ${method} ${JSON.stringify(args)} failed with result ${result}`));
                         });
@@ -337,7 +342,7 @@ export function proxy(name, kind) {
         const startTime = Math.floor(details.ExecMainStartTimestamp / 1000000);
         return cockpit.spawn(
             ["journalctl", "--unit", name, "--since=@" + startTime.toString()].concat(options || []),
-            { superuser: "try", error: "message" });
+            { superuser: "try"/* , error: "message" */ });
     }
 
     return self;
