@@ -39,6 +39,23 @@ if [ "$ID" = "debian" ]; then
     echo '* soft core unlimited' >> /etc/security/limits.conf
 fi
 
+if [ "$ID" = "opensuse-tumbleweed" ]; then
+    # Setup the opensuse specific cockpit PAM correctly
+    # This is normally patched in when cockpit is packed
+    cat <<EOF > /usr/lib/pam.d/cockpit
+#%PAM-1.0
+auth substack common-auth
+# List of users to deny access to Cockpit, by default root is included.
+auth    required pam_listfile.so item=user sense=deny file=/etc/cockpit/disallowed-users onerr=succeed
+account required pam_nologin.so
+account include common-account
+password include common-password
+session required pam_loginuid.so
+session optional pam_keyinit.so force revoke
+session include common-session
+EOF
+fi
+
 PLATFORM_ID="${PLATFORM_ID:-}"
 if [ "${PLATFORM_ID#platform:el}" != "$PLATFORM_ID" ]; then
     # allow /usr/local/bin/ in sudo shells, to use our installed tools like the Python bridge
