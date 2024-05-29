@@ -1086,7 +1086,7 @@ class Browser:
 
             # In (open)SUSE images, superuser access always requires the root password
             if user is None:
-                user = "root" if "suse" in self.machine.image else "admin"
+                user = get_superuser(self.machine.image)
 
             if passwordless:
                 self.wait_in_text("div[role=dialog]", "Administrative access")
@@ -2442,6 +2442,15 @@ def get_decorator(method: object, _class: object, name: str, default: Any = None
     attr = "_testlib__" + name
     return getattr(method, attr, getattr(_class, attr, default))
 
+
+def get_superuser(image: str) -> str:
+    # In (open)SUSE images, superuser access always requires the root password
+    return "root" if "suse" in image else "admin"
+
+
+def get_sshd_config_path(image: str) -> str:
+    # In (open)SUSE images, superuser access always requires the root password
+    return "/usr/etc/ssh/sshd_config" if "suse" in image else "/etc/ssh/sshd_config"
 
 ###########################
 # Test decorators
