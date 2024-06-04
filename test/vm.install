@@ -54,6 +54,13 @@ session required pam_loginuid.so
 session optional pam_keyinit.so force revoke
 session include common-session
 EOF
+
+    # Force allowing memory accounting and cgroup delegation in suse
+    # This is because by default suse images disable both of these
+    # so we can't run any tests that rely on checking memory usage
+    printf '[Manager]\nDefaultMemoryAccounting=yes\n' > /usr/lib/systemd/system.conf.d/80-memory-accounting.conf
+    mkdir -p /etc/systemd/system/user@.service.d
+    printf '[Service]\nDelegate=cpu io memory\n' > /etc/systemd/system/user@.service.d/80-cgroups-delegation.conf
 fi
 
 PLATFORM_ID="${PLATFORM_ID:-}"
