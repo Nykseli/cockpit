@@ -61,6 +61,15 @@ EOF
     printf '[Manager]\nDefaultMemoryAccounting=yes\n' > /usr/lib/systemd/system.conf.d/80-memory-accounting.conf
     mkdir -p /etc/systemd/system/user@.service.d
     printf '[Service]\nDelegate=cpu io memory\n' > /etc/systemd/system/user@.service.d/80-cgroups-delegation.conf
+
+    # SUSE images require password's to access chage
+    cat <<EOF > /etc/pam.d/chage
+#%PAM-1.0
+auth     required       pam_shells.so
+account  include        common-account
+password include        common-password
+session  include        common-session
+EOF
 fi
 
 PLATFORM_ID="${PLATFORM_ID:-}"
