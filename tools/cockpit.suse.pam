@@ -1,0 +1,21 @@
+#%PAM-1.0
+auth     substack common-auth
+auth     required pam_listfile.so item=user sense=deny file=/etc/cockpit/disallowed-users onerr=succeed
+auth     optional pam_ssh_add.so
+auth     include  postlogin-auth
+
+# List of users to deny access to Cockpit, by default root is included.
+account  required pam_nologin.so
+account  substack common-account
+account  include  postlogin-account
+
+password substack common-password
+password include  postlogin-password
+
+session  required pam_loginuid.so
+session  optional pam_keyinit.so open env_params
+session  optional pam_keyinit.so force revoke
+session  optional pam_ssh_add.so
+session  include  common-session
+session  include  postlogin-session
+

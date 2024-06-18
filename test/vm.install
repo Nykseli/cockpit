@@ -40,31 +40,6 @@ if [ "$ID" = "debian" ]; then
 fi
 
 if [ "$ID" = "opensuse-tumbleweed" ]; then
-    # Setup the opensuse specific cockpit PAM correctly
-    # This is normally patched in when cockpit is packed
-    cat <<EOF > /usr/lib/pam.d/cockpit
-#%PAM-1.0
-auth     substack common-auth
-auth     required pam_listfile.so item=user sense=deny file=/etc/cockpit/disallowed-users onerr=succeed
-auth     optional pam_ssh_add.so
-auth     include  postlogin-auth
-
-# List of users to deny access to Cockpit, by default root is included.
-account  required pam_nologin.so
-account  substack common-account
-account  include  postlogin-account
-
-password substack common-password
-password include  postlogin-password
-
-session  required pam_loginuid.so
-session  optional pam_keyinit.so open env_params
-session  optional pam_keyinit.so force revoke
-session  optional pam_ssh_add.so
-session  include  common-session
-session  include  postlogin-session
-EOF
-
     # Default pam policy notes pam last login date due to lastlog.so
     # This will add cockpit's pam config to the silent list so we
     # Don't fail due to unexpected journal lines
