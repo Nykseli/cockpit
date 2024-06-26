@@ -56,8 +56,12 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
             else:
                 self.sed_file(f'/nologin/a {admins_only_pam}', remote_filename)
 
-        deny_non_root("/etc/pam.d/cockpit")
-        deny_non_root("/etc/pam.d/sshd")
+        if "suse" in m.image:
+            deny_non_root("/usr/lib/pam.d/cockpit")
+            deny_non_root("/usr/lib/pam.d/sshd")
+        else:
+            deny_non_root("/etc/pam.d/cockpit")
+            deny_non_root("/etc/pam.d/sshd")
 
         m.start_cockpit()
         b.open("/system")
