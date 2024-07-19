@@ -60,6 +60,11 @@ account  include        common-account
 password include        common-password
 session  include        common-session
 EOF
+
+    # Zypper will take forever to work out these don't have net access
+    # Let's lo them
+    echo "127.0.1.1 download.opensuse.org" >> /etc/hosts
+    echo "127.0.1.1 codecs.opensuse.org" >> /etc/hosts
 fi
 
 PLATFORM_ID="${PLATFORM_ID:-}"
