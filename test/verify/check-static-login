@@ -766,12 +766,15 @@ EOF""")
         # root login is disabled by default via /etc/cockpit/disallowed-users on everything except RHEL 8
         if not m.image.startswith("rhel-8"):
             b.try_login("root", "foobar")
-            b.wait_in_text("#login-error-message", "Permission denied")
+            error_message = "Wrong user name or password" if "suse" in m.image else "Permission denied"
+            b.wait_in_text("#login-error-message", error_message)
 
         # disable root login with pam_access
         self.enable_root_login()
-        self.write_file("/etc/security/access.conf", "- : root : ALL\n", append=True)
-        self.sed_file("1 aaccount required pam_access.so", "/etc/pam.d/cockpit")
+        access_conf = "/usr/etc/security/access.conf" if "suse" in m.image else "/etc/security/access.conf"
+        self.write_file(access_conf, "- : root : ALL\n", append=True)
+        pam_path = "/usr/lib/pam.d/cockpit" if "suse" in m.image else "/etc/pam.d/cockpit"
+        self.sed_file("1 aaccount required pam_access.so", pam_path)
         b.try_login(user="root")
         b.wait_in_text("#login-error-message", "Permission denied")
 
