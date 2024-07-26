@@ -41,7 +41,7 @@ class KdumpHelpers(testlib.MachineCase):
 
     def enableKdump(self):
         if "suse" in self.machine.image:
-            self.machine.execute("sed -i -r 's/GRUB_CMDLINE_LINUX=\"(.*)\"/GRUB_CMDLINE_LINUX=\"\1,crashkernel=301M,high crashkernel=0,low\"/g' /etc/default/grub")
+            self.machine.execute("sed -i -r 's/GRUB_CMDLINE_LINUX=\"(.*)\"/GRUB_CMDLINE_LINUX=\"\1,crashkernel=192M,high crashkernel=0,low\"/g' /etc/default/grub")
             self.machine.execute("update-bootloader; systemctl enable kdump")
             self.machine.reboot()
 
