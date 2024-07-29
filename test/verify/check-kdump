@@ -211,7 +211,10 @@ class TestKdump(KdumpHelpers):
         # crash the kernel and make sure it wrote a report into the right directory
         self.crashKernel(f"stored in {customPath} as vmcore")
         m.execute(f"until test -e {customPath}/127.0.0.1*/vmcore; do sleep 1; done", timeout=180)
-        self.assertIn("Kdump compressed dump", m.execute(f"file {customPath}/127.0.0.1*/vmcore"))
+        # HACK: Tumbleweed's file doesn't correctly recognise kdump's, they are only shown
+        # as data, lets skip this and just check the file exists
+        if "suse" not in m.image:
+            self.assertIn("Kdump compressed dump", m.execute(f"file {customPath}/127.0.0.1*/vmcore"))
 
         self.login_and_go("/kdump")
         b.wait_visible("#app")
