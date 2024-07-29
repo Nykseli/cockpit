@@ -520,8 +520,12 @@ class TestKdumpNFS(KdumpHelpers):
             b.wait_not_present("#kdump-settings-dialog")
 
         # explicit nfs option, unset path
-        conf = m.execute("cat /etc/kdump.conf")
-        self.assertIn("\nnfs 10.111.113.2:/srv/kdump\n", conf)
+        if "suse" in m.image:
+            conf = m.execute("cat /etc/sysconfig/kdump")
+            self.assertIn("nfs://10.111.113.2/srv/kdump", conf)
+        else:
+            conf = m.execute("cat /etc/kdump.conf")
+            self.assertIn("\nnfs 10.111.113.2:/srv/kdump\n", conf)
         self.assertNotIn("\npath", conf)
 
         try:
