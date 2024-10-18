@@ -238,8 +238,8 @@ test -e %{buildroot}/usr/share/cockpit/branding/sle-micro/apple-touch-icon.png  
 test -e %{buildroot}/usr/share/cockpit/branding/sle-micro/default-1920x1200.png || install -m 644 -D /dev/null %{buildroot}/usr/share/cockpit/branding/sle-micro/default-1920x1200.png
 # remove files of not installable packages
 rm -r %{buildroot}%{_datadir}/cockpit/sosreport
-rm -f %{buildroot}/%{_prefix}/share/metainfo/org.cockpit-project.cockpit-sosreport.metainfo.xml
-rm -f %{buildroot}%{_datadir}/pixmaps/cockpit-sosreport.png
+rm -f %{buildroot}/%{_prefix}/share/metainfo/org.cockpit_project.cockpit_sosreport.metainfo.xml
+rm -f %{buildroot}%{_datadir}/icons/hicolor/64x64/apps/cockpit-sosreport.png
 %else
 %global _debugsource_packages 1
 %global _debuginfo_subpackages 0
