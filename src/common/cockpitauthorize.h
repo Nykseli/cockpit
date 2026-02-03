@@ -51,4 +51,7 @@ char *        cockpit_authorize_parse_x_conversation      (const char *challenge
 char *        cockpit_authorize_build_x_conversation      (const char *prompt,
                                                            char **conversation);
 
+char *        cockpit_authorize_parse_passkey             (const char *challenge,
+                                                           char **user);
+
 #endif /* COCKPIT_AUTHORIZE_H__ */

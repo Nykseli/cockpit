@@ -675,7 +675,8 @@ function debug(...args) {
             }
 
             const headers = {
-                Authorization: "Basic " + window.btoa(utf8(user + ":" + password + '\0' + known_hosts)),
+                // Authorization: "Basic " + window.btoa(utf8(user + ":" + password + '\0' + known_hosts)),
+                Authorization: "passkey " + window.btoa(utf8(user + ":" + password + '\0' + known_hosts)),
                 "X-Superuser": superuser,
             };
             // allow unknown remote hosts with interactive logins with "Connect to:"
@@ -1072,8 +1073,8 @@ function debug(...args) {
 
             const response = [];
             window.passkey = passkey;
-            // response.push(new Uint8Array(passkey.response.clientDataJSON).toBase64());
-            response.push(challenge);
+            response.push(new Uint8Array(passkey.response.clientDataJSON).toBase64());
+            // response.push(challenge);
             response.push("localhost")
             response.push(new Uint8Array(CBOR.encode(new Uint8Array(passkey.response.authenticatorData))).toBase64())
             response.push(new Uint8Array(passkey.response.signature).toBase64())
@@ -1086,11 +1087,15 @@ function debug(...args) {
                     setTimeout(resolve, milliseconds);
                 });
             }
+            await delay(500);
+            console.log(data.id, response.join("\n"));
+            converse(data.id, response.join("\n"));
+            // console.log(data.id, response.join("\n") + "\n");
             // converse(data.id, response.join("\n") + "\n");
-            for (const r of response) {
-                await delay(500);
-                converse(data.id, r)
-            }
+            // for (const r of response) {
+            //     await delay(500);
+            //     converse(data.id, r)
+            // }
             // if (key.endsWith(" login-data")) {
             //     login_data_host = key_host;
             //     console.log("call_converse(): got placeholder host keyfor", login_data_host, ", deferring db update");

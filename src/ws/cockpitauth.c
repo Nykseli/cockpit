@@ -1115,6 +1115,7 @@ cockpit_session_launch (CockpitAuth *self,
     }
   else if (g_str_equal (type, "basic") ||
            g_str_equal (type, "negotiate") ||
+           g_str_equal (type, "passkey") ||
            g_str_equal (type, "tls-cert"))
     {
       if (command == NULL && unix_path == NULL)
