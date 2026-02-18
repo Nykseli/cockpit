@@ -323,6 +323,12 @@ AC_MSG_RESULT($enable_strict)
 
 AM_PATH_PYTHON([3.6])
 
+# pam webauthn subproject
+# TODO: pass config options
+AC_CONFIG_COMMANDS_POST(
+  [cd vendor/pam-webauthn; cmake -DBUILD_MANPAGES=OFF .; cd ../..]
+)
+
 # Generate
 #
 

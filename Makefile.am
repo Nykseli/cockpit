@@ -7,6 +7,8 @@ noinst_LIBRARIES =
 noinst_PROGRAMS =
 PYTHON3 ?= python3
 
+SUBDIRS = vendor/pam-webauthn
+
 # See https://www.gnu.org/software/make/manual/html_node/Force-Targets.html
 FORCE:
 

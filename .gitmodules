@@ -15,3 +15,6 @@
 	path = vendor/beipack
 	url = https://github.com/allisonkarlitskaya/beipack
 	branch = main
+[submodule "vendor/pam-webauthn"]
+	path = vendor/pam-webauthn
+	url = https://github.com/Venefilyn/pam-webauthn
