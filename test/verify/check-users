@@ -286,7 +286,6 @@ class TestAccounts(testlib.MachineCase):
         # in suse images, Administrative requires root to be unlocked
         if "suse" in m.image:
             m.execute("usermod root --unlock")
-
         createUser(
             browser=b,
             machine=m,
@@ -342,8 +341,8 @@ class TestAccounts(testlib.MachineCase):
         b2.switch_to_top()
         b2.wait_in_text(".curtains-ct h1", "Disconnected")
 
-        # HACK: lastlog does not record sessions from ssh
-        if not m.ws_container:
+        # HACK: lastlog does not record sessions from ssh, lastlog2 is broken on opensuse
+        if not m.ws_container and "opensuse" not in m.image:
             today = b.eval_js("Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format()")
             b.wait_in_text("#accounts-list tbody tr:contains('paul')", today)
 
@@ -689,17 +688,20 @@ class TestAccounts(testlib.MachineCase):
 
             # Now log out and it should update again
             b2.logout()
-            b.wait_in_text("#account-last-login", year)
-            b.wait_in_text("#account-last-login", month)
-            b.wait_visible("#account-logout[disabled]")
+            # HACK: lsatlog2 is borken on opensuse
+            if "suse" not in m.image:
+                b.wait_in_text("#account-last-login", year)
+                b.wait_in_text("#account-last-login", month)
+                b.wait_visible("#account-logout[disabled]")
 
             # Terminate session
             b2.login_and_go("/system")
             b.wait_text("#account-last-login", "Logged in")
             b.click("#account-details button:contains('Terminate session')")
-            b.wait_in_text("#account-last-login", year)
-            b.wait_in_text("#account-last-login", month)
-            b.wait_visible("#account-logout[disabled]")
+            if "suse" not in m.image:
+                b.wait_in_text("#account-last-login", year)
+                b.wait_in_text("#account-last-login", month)
+                b.wait_visible("#account-logout[disabled]")
 
         # Create an account and force password change on first login
         b.go('/users')
@@ -716,7 +718,8 @@ class TestAccounts(testlib.MachineCase):
         b.logout()
 
         # login in second window to check if last login is updated in accounts list
-        if not m.ws_container:  # User is not shown as logged in when logged in through Cockpit
+        # lastlog2 broken on opensuse
+        if not m.ws_container and "suse" not in m.image:  # User is not shown as logged in when logged in through Cockpit
             b2.login_and_go("/users")
             b2.wait_in_text("#accounts-list tbody tr[data-row-id='robert'] td[data-label='Last active']", "Never logged in")
 
@@ -1142,6 +1145,7 @@ class TestAccounts(testlib.MachineCase):
         self.assertEqual(self.accountExpiryInfo("scruffy", "Password expires"), "password must be changed")
 
     @testlib.skipWsContainer("User is not shown as logged in with cockpit/ws")
+    @testlib.skipImage("TODO: fix for OpenSUSE lastlog2 is broken", "opensuse-tumbleweed")
     def testAccountLogs(self) -> None:
         b = self.browser
         m = self.machine
